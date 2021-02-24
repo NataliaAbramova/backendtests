@@ -1,9 +1,12 @@
 package ru.geekbrans.img;
 
+import com.github.javafaker.Faker;
 import io.restassured.RestAssured;
+import io.restassured.builder.MultiPartSpecBuilder;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
+import io.restassured.specification.MultiPartSpecification;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import org.apache.commons.io.FileUtils;
@@ -13,10 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
 public abstract class BaseTest {
     protected static Properties prop = new Properties();
@@ -30,7 +30,10 @@ public abstract class BaseTest {
     protected static ResponseSpecification wrongRespSpek;
     protected static String wrongImgId = "ad5t43tmjdsxfgnajk";
     protected static RequestSpecification baseRequestSpecification;
+    protected static MultiPartSpecification multiPartSpec;
+    protected static RequestSpecification uploadReqSpec;
     protected static final String imgType = "image/jpeg";
+    Faker faker = new Faker();
 
     @BeforeAll
     static void beforeAll() {
@@ -45,22 +48,18 @@ public abstract class BaseTest {
                 .expectStatusLine("HTTP/1.1 200 OK")
                 .expectContentType(ContentType.JSON)
                 .expectResponseTime(Matchers.lessThan(5000L))
-                .expectHeader("Access-Control-Allow-Credentials", "true")
                 .build();
         notAuthRespSpek = new ResponseSpecBuilder()
                 .expectStatusCode(401)
                 .expectResponseTime(Matchers.lessThan(5000L))
-                .expectHeader("Access-Control-Allow-Credentials", "true")
                 .build();
         notFoundRespSpek = new ResponseSpecBuilder()
                 .expectStatusCode(404)
                 .expectResponseTime(Matchers.lessThan(5000L))
-                .expectHeader("Access-Control-Allow-Credentials", "true")
                 .build();
         wrongRespSpek = new ResponseSpecBuilder()
                 .expectStatusCode(400)
-                .expectResponseTime(Matchers.lessThan(5000L))
-                .expectHeader("Access-Control-Allow-Credentials", "true")
+                .expectResponseTime(Matchers.lessThan(15000L))
                 .build();
         baseRequestSpecification = new RequestSpecBuilder()
                 .addHeader("Authorization", token)
@@ -77,16 +76,18 @@ public abstract class BaseTest {
         }
     }
 
-    protected byte[] getFileContentInBase64(String fileName) {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File inputFile = new File(Objects.requireNonNull(classLoader.getResource(fileName)).getFile());
-        byte[] fileContent = new byte[0];
-        try {
-            fileContent =   FileUtils.readFileToByteArray(inputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return fileContent;
+    protected void preparePostSpecs(Object content) {
+        multiPartSpec = new MultiPartSpecBuilder(content)
+                .controlName("image")
+                .build();
+        uploadReqSpec = new RequestSpecBuilder()
+                            .addHeader("Authorization", token)
+                            .setAccept(ContentType.ANY)
+                            .build()
+                            .multiPart(multiPartSpec)
+                .formParam("title", faker.chuckNorris().fact())
+                .formParam("description", faker.harryPotter().quote());
     }
+
 
 }

@@ -1,99 +1,83 @@
 package ru.geekbrans.img;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import ru.geekbrans.img.dto.ErrorResponse;
+import ru.geekbrans.img.dto.PostImageResponse;
+import ru.geekbrans.img.step.CommonPostRequest;
+import ru.geekbrans.img.utils.FileUtils;
 
 import java.util.Base64;
-import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 
 public class UploadImageTest extends BaseTest {
 
-    String encodedImage;
     static String uploadedImageHashCode;
-    byte[] fileContent;
 
-    @BeforeEach
-    void setUp() {
-        fileContent = getFileContentInBase64("bfoto_ru_3269.jpg");
-        encodedImage = Base64.getEncoder().encodeToString(fileContent);
+    @Test
+    void uploadFileTest() {
+        preparePostSpecs(FileUtils.getFileContent(Images.POSITIVE.path));
+        PostImageResponse response = CommonPostRequest.uploadCommonImage(uploadReqSpec);
+        uploadedImageHashCode = response.getData().getDeletehash();
+        Assertions.assertNotNull(response.getData().getId());
+        Assertions.assertTrue(response.getSuccess());
+        Assertions.assertEquals(response.getData().getType(), imgType);
+        Assertions.assertEquals(response.getData().getWidth(), Images.POSITIVE.width);
+        Assertions.assertEquals(response.getData().getHeight(), Images.POSITIVE.height);
     }
 
     @Test
     void base64UploadFileTest() {
-         Map data = given()
-                .headers("Authorization", token)
-                .multiPart("image", encodedImage)
-                .expect()
-                .body("success", is(true))
-                .body("data.id", is(notNullValue()))
-                .when()
-                .post(Endpoints.POST_IMAGE_REQUEST)
-                .prettyPeek()
-                .then()
-                .statusCode(200)
-                .extract()
-                .response()
-                .jsonPath()
-                .getMap("data");
-        uploadedImageHashCode = (String) data.get("deletehash");
-        Assertions.assertEquals(data.get("type"), "image/jpeg");
-        Assertions.assertEquals(data.get("width"), 820);
-        Assertions.assertEquals(data.get("height"), 579);
+        preparePostSpecs(Base64.getEncoder().encodeToString(FileUtils.getFileContent(Images.POSITIVE.path)));
+        PostImageResponse response = CommonPostRequest.uploadCommonImage(uploadReqSpec);
+        uploadedImageHashCode = response.getData().getDeletehash();
+        Assertions.assertNotNull(response.getData().getId());
+        Assertions.assertTrue(response.getSuccess());
+        Assertions.assertEquals(response.getData().getType(), imgType);
+        Assertions.assertEquals(response.getData().getWidth(), Images.POSITIVE.width);
+        Assertions.assertEquals(response.getData().getHeight(), Images.POSITIVE.height);
     }
 
     @Test
     void uploadFileFromURLTest() {
-        Map data = given()
-                .headers("Authorization", token)
-                .multiPart("image", "https://upload.wikimedia.org/wikipedia/commons/8/80/140-P1020281_-_Flickr_-_Laurie_Nature_Bee.jpg")
-                .expect()
-                .body("success", is(true))
-                .body("data.id", is(notNullValue()))
-                .when()
-                .post(Endpoints.POST_IMAGE_REQUEST)
-                .prettyPeek()
-                .then()
-                .statusCode(200)
-                .extract()
-                .response()
-                .jsonPath()
-                .getMap("data");
-        uploadedImageHashCode = (String) data.get("deletehash");
-        Assertions.assertEquals(data.get("type"), "image/jpeg");
-        Assertions.assertEquals(data.get("width"), 3504);
-        Assertions.assertEquals(data.get("height"), 2336);
+        preparePostSpecs(Images.FROM_URL.path);
+        PostImageResponse response = CommonPostRequest.uploadCommonImage(uploadReqSpec);
+        uploadedImageHashCode = response.getData().getDeletehash();
+        Assertions.assertNotNull(response.getData().getId());
+        Assertions.assertTrue(response.getSuccess());
+        Assertions.assertEquals(response.getData().getType(), imgType);
+        Assertions.assertEquals(response.getData().getWidth(), Images.FROM_URL.width);
+        Assertions.assertEquals(response.getData().getHeight(), Images.FROM_URL.height);
     }
 
     @Test
     void uploadLargeFile() {
-        Map data = given()
-                .headers("Authorization", token)
-                .multiPart("image", Base64.getEncoder().encodeToString(getFileContentInBase64("DSC_0557.JPG")))
-                .expect()
+        preparePostSpecs(FileUtils.getFileContent(Images.TO_BIG.path));
+        ErrorResponse response = given()
+                .spec(uploadReqSpec)
                 .when()
                 .post(Endpoints.POST_IMAGE_REQUEST)
                 .prettyPeek()
                 .then()
-                .statusCode(400)
+                .spec(wrongRespSpek)
                 .extract()
-                .response()
-                .jsonPath().getMap("");
-        Assertions.assertEquals(data.get("success"), false);
+                .body()
+                .as(ErrorResponse.class);
+        Assertions.assertFalse(response.getSuccess());
     }
 
     @AfterAll
     static void tearDown() {
         if (uploadedImageHashCode != null) {
         given()
-                .headers("Authorization", token)
+                .spec(baseRequestSpecification)
                 .when()
                 .delete(Endpoints.DELETE_IMAGE_REQUEST, uploadedImageHashCode)
                 .prettyPeek()
                 .then()
-                .statusCode(200);
+                .spec(successRespSpek);
         }
     }
 
