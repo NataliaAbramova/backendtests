@@ -53,7 +53,7 @@ public class UploadImageTest extends BaseTest {
     }
 
     @Test
-    void uploadLargeFile() {
+    void uploadLargeFileTest() {
         preparePostSpecs(FileUtils.getFileContent(Images.TO_BIG.path));
         ErrorResponse response = given()
                 .spec(uploadReqSpec)

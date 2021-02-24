@@ -9,14 +9,14 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.MultiPartSpecification;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import org.apache.commons.io.FileUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public abstract class BaseTest {
     protected static Properties prop = new Properties();
