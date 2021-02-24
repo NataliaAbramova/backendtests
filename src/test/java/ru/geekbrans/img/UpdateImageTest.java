@@ -1,8 +1,6 @@
-package ru.geekbrans.updimg;
+package ru.geekbrans.img;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import ru.geekbrans.BaseTest;
 
 import java.util.Base64;
 import java.util.Map;
@@ -23,7 +21,7 @@ public class UpdateImageTest extends BaseTest {
                 .body("data.id", is(notNullValue()))
                 .body("data.title", is(nullValue()))
                 .when()
-                .post("/image")
+                .post(Endpoints.POST_IMAGE_REQUEST)
                 .prettyPeek()
                 .then()
                 .statusCode(200)
@@ -41,7 +39,7 @@ public class UpdateImageTest extends BaseTest {
                 .expect()
                 .body("success", is(true))
                 .when()
-                .post("/image/{id}", id)
+                .post(Endpoints.PUT_IMAGE_REQUEST, id)
                 .prettyPeek()
                 .then()
                 .statusCode(200);
@@ -52,7 +50,7 @@ public class UpdateImageTest extends BaseTest {
                 .expect()
                 .body("data.title", is("100500"))
                 .when()
-                .get("image/{id}", id)
+                .get(Endpoints.GET_IMAGE_REQUEST, id)
                 .then()
                 .statusCode(200);
 
@@ -60,7 +58,7 @@ public class UpdateImageTest extends BaseTest {
         given()
                 .headers("Authorization", token)
                 .when()
-                .delete("image/{deleteHash}", deleteHash)
+                .delete(Endpoints.DELETE_IMAGE_REQUEST, deleteHash)
                 .prettyPeek()
                 .then()
                 .statusCode(200);

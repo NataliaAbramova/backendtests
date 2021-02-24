@@ -1,7 +1,6 @@
-package ru.geekbrans.uploadimg;
+package ru.geekbrans.img;
 
 import org.junit.jupiter.api.*;
-import ru.geekbrans.BaseTest;
 
 import java.util.Base64;
 import java.util.Map;
@@ -31,7 +30,7 @@ public class UploadImageTest extends BaseTest {
                 .body("success", is(true))
                 .body("data.id", is(notNullValue()))
                 .when()
-                .post("/image")
+                .post(Endpoints.POST_IMAGE_REQUEST)
                 .prettyPeek()
                 .then()
                 .statusCode(200)
@@ -54,7 +53,7 @@ public class UploadImageTest extends BaseTest {
                 .body("success", is(true))
                 .body("data.id", is(notNullValue()))
                 .when()
-                .post("/image")
+                .post(Endpoints.POST_IMAGE_REQUEST)
                 .prettyPeek()
                 .then()
                 .statusCode(200)
@@ -75,7 +74,7 @@ public class UploadImageTest extends BaseTest {
                 .multiPart("image", Base64.getEncoder().encodeToString(getFileContentInBase64("DSC_0557.JPG")))
                 .expect()
                 .when()
-                .post("/image")
+                .post(Endpoints.POST_IMAGE_REQUEST)
                 .prettyPeek()
                 .then()
                 .statusCode(400)
@@ -91,7 +90,7 @@ public class UploadImageTest extends BaseTest {
         given()
                 .headers("Authorization", token)
                 .when()
-                .delete("image/{deleteHash}", uploadedImageHashCode)
+                .delete(Endpoints.DELETE_IMAGE_REQUEST, uploadedImageHashCode)
                 .prettyPeek()
                 .then()
                 .statusCode(200);
